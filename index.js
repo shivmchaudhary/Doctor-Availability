@@ -2,8 +2,8 @@ const express = require("express");
 
 const app = express();
 
-const {readJsonInput, getDayOfWeek, addDaystoDate} = require("./utils");
-const {DAYS_OF_WEEK} = require("./constants");
+const { readJsonInput, getDayOfWeek, addDaystoDate } = require("./utils");
+const { DAYS_OF_WEEK } = require("./constants");
 
 //map to check the count, how many times a day is checked. anyday will be checked at most 2 times
 let map;
@@ -15,10 +15,9 @@ let recursiveCount;
 let checkCount;
 
 const findAvailabilityOfDay = (time, dayOfWeekIndex, availabilityTimings) => {
-
   //increment the count of day checked
   map[dayOfWeekIndex]++;
-  if(map[dayOfWeekIndex]>2){
+  if (map[dayOfWeekIndex] > 2) {
     return null;
   }
 
@@ -46,7 +45,6 @@ const findAvailabilityOfDay = (time, dayOfWeekIndex, availabilityTimings) => {
       checkTimeMinutes < availableEndTimeMinutes
     ) {
       // Doctor is available at the given time
-      checkCount = 0;
       return time;
     } else if (checkTimeMinutes < availableStartTimeMinutes) {
       checkCount++;
@@ -63,7 +61,7 @@ const findAvailabilityOfDay = (time, dayOfWeekIndex, availabilityTimings) => {
       }
     }
   }
-  
+
   //call recursive function when no slots found on the given day
   if (nextAvailableTime === null) {
     recursiveCount++;
@@ -78,6 +76,7 @@ const findAvailabilityOfDay = (time, dayOfWeekIndex, availabilityTimings) => {
   return nextAvailableTime;
 };
 
+app.get("/health", (req, res) => res.send("Server is running"));
 
 app.get("/doctor-availability", async (req, res) => {
   let input = readJsonInput();
@@ -87,21 +86,25 @@ app.get("/doctor-availability", async (req, res) => {
 
   const date = req.query.date;
   const time = req.query.time;
-  const nextTime = findAvailabilityOfDay(time, getDayOfWeek(date), input.availabilityTimings);
+  const nextTime = findAvailabilityOfDay(
+    time,
+    getDayOfWeek(date),
+    input.availabilityTimings
+  );
   const nextDate = addDaystoDate(date, recursiveCount);
 
-  if(checkCount==0 && recursiveCount==0){
-    res.send({'isAvailable': true});
-  }
-  else {
+  if (checkCount == 0 && recursiveCount == 0) {
+    res.send({ isAvailable: true });
+  } else {
     res.send({
-      "isAvailable": false,
-      "nextAvailableSlot": {
-        "date": nextDate,
-        "time": nextTime }
-    })
+      isAvailable: false,
+      nextAvailableSlot: {
+        date: nextDate,
+        time: nextTime,
+      },
+    });
   }
-
 });
 
-app.listen(3000, () => console.log("Server is running..."));
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log("Server is running on PORT..." + PORT));
